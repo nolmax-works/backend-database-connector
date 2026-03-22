@@ -30,7 +30,7 @@ public class DatabaseConfig {
         dataSource = new HikariDataSource(config);
     }
 
-    public static synchronized void initialize(String ip, String port, String databaseName, String username, String password) {
+    public static synchronized void initialize(String ip, int port, String databaseName, String username, String password) {
         String jdbcUrl = "jdbc:postgresql://" + ip + ":" + port + "/" + databaseName;
         initialize(jdbcUrl, username, password);
     }

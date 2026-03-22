@@ -4,7 +4,7 @@ plugins {
 }
 
 group = "com.nolmax.database"
-version = "1.1"
+version = "1.2"
 
 repositories {
     mavenCentral()
