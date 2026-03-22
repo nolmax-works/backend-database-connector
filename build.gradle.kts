@@ -4,7 +4,7 @@ plugins {
 }
 
 group = "com.nolmax.database"
-version = "1.0"
+version = "1.1"
 
 repositories {
     mavenCentral()
@@ -17,6 +17,7 @@ dependencies {
 
     implementation("com.zaxxer:HikariCP:7.0.2")
     implementation("org.mindrot:jbcrypt:0.4")
+    implementation("org.postgresql:postgresql:42.7.10")
 }
 
 publishing {
