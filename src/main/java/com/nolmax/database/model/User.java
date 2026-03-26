@@ -9,6 +9,7 @@ public class User {
     private String passwordHash;
     private String avatarUrl;
     private Long updateId;
+    private String token;
 
 
     public User() {}
@@ -17,6 +18,13 @@ public class User {
         this.id = id;
         this.username = username;
         this.passwordHash = passwordHash;
+        this.avatarUrl = avatarUrl;
+        this.updateId = updateId;
+    }
+
+    public User(Long id, String token, String avatarUrl, Long updateId) {
+        this.id = id;
+        this.token = token;
         this.avatarUrl = avatarUrl;
         this.updateId = updateId;
     }
@@ -30,6 +38,9 @@ public class User {
 
     public String getPasswordHash() { return passwordHash; }
     public void setPasswordHash(String passwordHash) { this.passwordHash = passwordHash; }
+
+    public String getToken() { return token; }
+    public void setToken(String token) { this.token = token; }
 
     public String getAvatarUrl() { return avatarUrl; }
     public void setAvatarUrl(String avatarUrl) { this.avatarUrl = avatarUrl; }
