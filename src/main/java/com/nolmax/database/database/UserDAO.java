@@ -3,6 +3,7 @@ package com.nolmax.database.database;
 import com.nolmax.database.config.DatabaseConfig;
 import com.nolmax.database.model.User;
 import com.nolmax.database.util.IdGenerator;
+import com.nolmax.database.util.PasswordUtils;
 
 import java.nio.ByteBuffer;
 import java.security.SecureRandom;
@@ -71,25 +72,28 @@ public class UserDAO {
         }
     }
 
-    public String requestToken(String username, String passwordHash) {
-        String sql = "SELECT id, avatar_url, update_id FROM users WHERE username = ? AND password_hash = ?";
+    public String requestToken(String username, String password) {
+        String sql = "SELECT id, password_hash FROM users WHERE username = ?";
         try (Connection conn = DatabaseConfig.getDataSource().getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setString(1, username);
-            stmt.setString(2, passwordHash);
 
-            try (ResultSet rs = stmt.executeQuery()) {
-                if (rs.next()) {
-                    long userId = rs.getLong("id");
-                    String token = createToken(conn, userId);
-                    return token;
+        stmt.setString(1, username);
+
+        try (ResultSet rs = stmt.executeQuery()) {
+            if (rs.next()) {
+                long userId = rs.getLong("id");
+                String storedHash = rs.getString("password_hash");
+
+                if (PasswordUtils.verifyPassword(password, storedHash)) {
+                    return createToken(conn, userId);
                 }
             }
-        } catch (SQLException e) {
-            e.printStackTrace();
         }
-        return null;
+    } catch (SQLException e) {
+        e.printStackTrace();
     }
+    return null;
+}
 
     public boolean loginWithToken(User user) {
         String sql =
