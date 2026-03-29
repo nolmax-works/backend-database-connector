@@ -56,8 +56,9 @@ public class UserDAO {
     }
 
     private String encodeLongToBase64(long value) {
-        byte[] bytes = ByteBuffer.allocate(Long.BYTES).putLong(value).array();
-        return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
+        ByteBuffer buffer = ByteBuffer.allocate(Long.BYTES);
+        buffer.putLong(value);
+        return Base64.getUrlEncoder().withoutPadding().encodeToString(buffer.array());
     }
 
     private String createToken(Connection conn, long userId) throws SQLException {
@@ -77,23 +78,23 @@ public class UserDAO {
         try (Connection conn = DatabaseConfig.getDataSource().getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
-        stmt.setString(1, username);
+            stmt.setString(1, username);
 
-        try (ResultSet rs = stmt.executeQuery()) {
-            if (rs.next()) {
-                long userId = rs.getLong("id");
-                String storedHash = rs.getString("password_hash");
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    long userId = rs.getLong("id");
+                    String storedHash = rs.getString("password_hash");
 
-                if (PasswordUtils.verifyPassword(password, storedHash)) {
-                    return createToken(conn, userId);
+                    if (PasswordUtils.verifyPassword(password, storedHash)) {
+                        return createToken(conn, userId);
+                    }
                 }
             }
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
-    } catch (SQLException e) {
-        e.printStackTrace();
+        return null;
     }
-    return null;
-}
 
     public boolean loginWithToken(User user) {
         String sql =
