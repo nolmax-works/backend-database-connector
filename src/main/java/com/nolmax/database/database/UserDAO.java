@@ -40,8 +40,8 @@ public class UserDAO {
     }
 
     private String generateToken(Long userId) {
-        String encodedUserId = encodeLongToBase64(userId);
-        String encodedTimestamp = encodeLongToBase64(System.currentTimeMillis());
+        String encodedUserId = new String(Base64.getEncoder().encode(userId.toString().getBytes()));
+        String encodedTimestamp = new String(Base64.getEncoder().encode(String.valueOf(System.currentTimeMillis() / 1000).getBytes()));
         String randomChar = generateRandomString(10);
 
         return encodedUserId + "$" + encodedTimestamp + "$" + randomChar;
@@ -53,12 +53,6 @@ public class UserDAO {
             sb.append(RANDOM_CHARS.charAt(SECURE_RANDOM.nextInt(RANDOM_CHARS.length())));
         }
         return sb.toString();
-    }
-
-    private String encodeLongToBase64(long value) {
-        ByteBuffer buffer = ByteBuffer.allocate(Long.BYTES);
-        buffer.putLong(value);
-        return Base64.getUrlEncoder().withoutPadding().encodeToString(buffer.array());
     }
 
     private String createToken(Connection conn, long userId) throws SQLException {
