@@ -9,14 +9,13 @@ import java.util.ArrayList;
 
 public class ParticipantDAO {
 
-    public boolean joinNew(Participant participant) {
-        String sql = "INSERT INTO participants (conversation_id, user_id, role, update_id) VALUES (?, ?, ?, ?)";
+    private boolean joinNew(Participant participant) {
+        String sql = "INSERT INTO participants (conversation_id, user_id, update_id) VALUES (?, ?, ?)";
         try (Connection conn = DatabaseConfig.getDataSource().getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setLong(1, participant.getConversationId());
             stmt.setLong(2, participant.getUserId());
-            stmt.setInt(3, participant.getRole());
-            stmt.setLong(4, IdGenerator.getInstance().nextId());
+            stmt.setLong(3, IdGenerator.getInstance().nextId());
             int rows = stmt.executeUpdate();
             return rows > 0;
         } catch (SQLException e) {
@@ -25,7 +24,7 @@ public class ParticipantDAO {
         return false;
     }
 
-    public boolean joinAgain(Participant participant) {
+    private boolean joinAgain(Participant participant) {
         String sql = "UPDATE participants SET left_at = NULL, update_id = ? WHERE conversation_id = ? AND user_id = ?";
         try (Connection conn = DatabaseConfig.getDataSource().getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
