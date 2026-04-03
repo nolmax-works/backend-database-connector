@@ -1,4 +1,5 @@
 package com.nolmax.database.database;
+
 import com.nolmax.database.config.DatabaseConfig;
 import com.nolmax.database.model.Conversation;
 import com.nolmax.database.util.IdGenerator;
@@ -10,12 +11,11 @@ import java.util.List;
 public class ConversationDAO {
     public boolean createConversation(Conversation conversation) {
         String sql = "INSERT INTO conversations (type, name, avatar_url, created_by, update_id) VALUES (?, ?, ?, ?, ?)";
-        try (Connection conn = DatabaseConfig.getDataSource().getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
-            stmt.setInt(1,conversation.getType());
-            stmt.setString(2,conversation.getName());
-            stmt.setString(3,conversation.getAvatarUrl());
-            stmt.setLong(4,conversation.getCreatedBy());
+        try (Connection conn = DatabaseConfig.getDataSource().getConnection(); PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+            stmt.setInt(1, conversation.getType());
+            stmt.setString(2, conversation.getName());
+            stmt.setString(3, conversation.getAvatarUrl());
+            stmt.setLong(4, conversation.getCreatedBy());
             stmt.setLong(5, IdGenerator.getInstance().nextId());
 
             int rows = stmt.executeUpdate();
@@ -35,8 +35,7 @@ public class ConversationDAO {
 
     public boolean updateAvatar(Long id, String avatarUrl) {
         String sql = "UPDATE conversations SET avatar_url = ?, update_id = ? WHERE id = ?";
-        try (Connection conn = DatabaseConfig.getDataSource().getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+        try (Connection conn = DatabaseConfig.getDataSource().getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, avatarUrl);
             stmt.setLong(2, IdGenerator.getInstance().nextId());
             stmt.setLong(3, id);
@@ -51,8 +50,7 @@ public class ConversationDAO {
 
     public boolean updateName(Long id, String name) {
         String sql = "UPDATE conversations SET name = ?, update_id = ? WHERE id = ?";
-        try (Connection conn = DatabaseConfig.getDataSource().getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+        try (Connection conn = DatabaseConfig.getDataSource().getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, name);
             stmt.setLong(2, IdGenerator.getInstance().nextId());
             stmt.setLong(3, id);
@@ -67,8 +65,7 @@ public class ConversationDAO {
 
     public boolean updateLastMessageId(Long id, Long messageId) {
         String sql = "UPDATE conversations SET last_message_id = ?, update_id = ? WHERE id = ?";
-        try (Connection conn = DatabaseConfig.getDataSource().getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+        try (Connection conn = DatabaseConfig.getDataSource().getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setLong(1, messageId);
             stmt.setLong(2, IdGenerator.getInstance().nextId());
             stmt.setLong(3, id);
@@ -81,10 +78,9 @@ public class ConversationDAO {
         return false;
     }
 
-    public  boolean deleteConversation(Long id) {
+    public boolean deleteConversation(Long id) {
         String sql = "DELETE FROM conversations WHERE id = ?";
-        try (Connection conn = DatabaseConfig.getDataSource().getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+        try (Connection conn = DatabaseConfig.getDataSource().getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setLong(1, id);
 
             int rows = stmt.executeUpdate();
@@ -96,15 +92,11 @@ public class ConversationDAO {
     }
 
     public List<Conversation> pull(Long lastUpdateId, Long userId) {
-        String sql = "SELECT c.id, c.type, c.name, c.avatar_url, c.update_id, c.last_message_id " +
-                     "FROM conversations c " +
-                     "JOIN conversation_participants cp ON c.id = cp.conversation_id " +
-                     "WHERE cp.user_id = ? AND c.update_id > ?";
+        String sql = "SELECT c.id, c.type, c.name, c.avatar_url, c.update_id, c.last_message_id " + "FROM conversations c " + "JOIN conversation_participants cp ON c.id = cp.conversation_id " + "WHERE cp.user_id = ? AND c.update_id > ?";
         List<Conversation> conversations = new ArrayList<>();
-        try (Connection conn = DatabaseConfig.getDataSource().getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-             stmt.setLong(1, userId);
-             stmt.setLong(2, lastUpdateId);
+        try (Connection conn = DatabaseConfig.getDataSource().getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setLong(1, userId);
+            stmt.setLong(2, lastUpdateId);
 
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
@@ -122,5 +114,21 @@ public class ConversationDAO {
             e.printStackTrace();
         }
         return conversations;
+    }
+
+    public boolean isCreator(Long conversationId, Long userId) {
+        String sql = "SELECT created_by FROM conversations WHERE id = ?";
+        try (Connection conn = DatabaseConfig.getDataSource().getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setLong(1, conversationId);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getLong("created_by") == userId;
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
     }
 }
