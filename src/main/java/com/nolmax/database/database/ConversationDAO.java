@@ -123,7 +123,7 @@ public class ConversationDAO {
     }
 
     public List<Conversation> pull(Long conversationId, Long lastUpdateId) {
-        String sql = "SELECT type, name, avatar_url, update_id, last_message_id FROM conversations WHERE id = ? AND update_id > ?";
+        String sql = "SELECT type, name, avatar_url, update_id, last_message_id, created_by FROM conversations WHERE id = ? AND update_id > ?";
         List<Conversation> conversations = new ArrayList<>();
         try (Connection conn = DatabaseConfig.getDataSource().getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setLong(1, conversationId);
@@ -138,6 +138,7 @@ public class ConversationDAO {
                     conversation.setAvatarUrl(rs.getString("avatar_url"));
                     conversation.setUpdateId(rs.getLong("update_id"));
                     conversation.setLastMessageId(rs.getLong("last_message_id"));
+                    conversation.setCreatedBy(rs.getLong("created_by"));
                     conversations.add(conversation);
                 }
             }
