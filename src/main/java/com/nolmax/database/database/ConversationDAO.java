@@ -105,11 +105,28 @@ public class ConversationDAO {
         return false;
     }
 
-    public List<Conversation> pull(Long lastUpdateId, Long userId) {
-        String sql = "SELECT c.id, c.type, c.name, c.avatar_url, c.update_id, c.last_message_id " + "FROM conversations c " + "JOIN conversation_participants cp ON c.id = cp.conversation_id " + "WHERE cp.user_id = ? AND c.update_id > ?";
-        List<Conversation> conversations = new ArrayList<>();
+    public List<Long> takeUserConversations(Long userId) {
+        String sql = "SELECT c.id FROM conversations c JOIN participants cp ON c.id = cp.conversation_id WHERE cp.user_id = ?";
+        List<Long> conversationIds = new ArrayList<>();
         try (Connection conn = DatabaseConfig.getDataSource().getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setLong(1, userId);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    conversationIds.add(rs.getLong("id"));
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return conversationIds;
+    }
+
+    public List<Conversation> pull(Long conversationId, Long lastUpdateId) {
+        String sql = "SELECT id, type, name, avatar_url, update_id, last_message_id " + "FROM conversations " + "WHERE conversation_id = ? AND update_id > ?";
+        List<Conversation> conversations = new ArrayList<>();
+        try (Connection conn = DatabaseConfig.getDataSource().getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setLong(1, conversationId);
             stmt.setLong(2, lastUpdateId);
 
             try (ResultSet rs = stmt.executeQuery()) {

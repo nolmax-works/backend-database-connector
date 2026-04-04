@@ -153,7 +153,7 @@ public class UserDAO {
 
     public ArrayList<User> pull(Long conversationId, Long lastUpdateId) {
         ArrayList<User> users = new ArrayList<>();
-        String sql = "SELECT u.id, u.username, u.avatar_url, u.update_id " + "FROM users u " + "JOIN conversation_participants cp ON u.id = cp.user_id " + "WHERE cp.conversation_id = ? AND u.update_id > ?";
+        String sql = "SELECT u.id, u.username, u.avatar_url, u.update_id " + "FROM users u " + "JOIN participants cp ON u.id = cp.user_id " + "WHERE cp.conversation_id = ? AND u.update_id > ?";
         try (Connection conn = DatabaseConfig.getDataSource().getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setLong(1, conversationId);
             stmt.setLong(2, lastUpdateId);
