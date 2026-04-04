@@ -2,6 +2,7 @@ package com.nolmax.database.database;
 
 import com.nolmax.database.config.DatabaseConfig;
 import com.nolmax.database.model.Conversation;
+import com.nolmax.database.model.Participant;
 import com.nolmax.database.util.IdGenerator;
 
 import java.sql.*;
@@ -25,6 +26,19 @@ public class ConversationDAO {
                         conversation.setId(rs.getLong(1));
                     }
                 }
+
+                if (conversation.getType() != null && conversation.getType() == 1) {
+                    Participant participant = new Participant();
+                    participant.setConversationId(conversation.getId());
+                    participant.setUserId(conversation.getCreatedBy());
+                    participant.setRole(1);
+
+                    ParticipantDAO participantDAO = new ParticipantDAO();
+                    if (!participantDAO.join(participant)) {
+                        return false;
+                    }
+                }
+
                 return true;
             }
         } catch (SQLException e) {
