@@ -6,15 +6,15 @@ import java.util.ArrayList;
 
 public class MessageDAO {
     public boolean createMessage(Message message) {
-        String sql = "INSERT INTO messages (id, conversation_id, sender_id, content, update_id) " +
-                     "VALUES (?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO messages (id, conversation_id, sender_id, content) " +
+                     "VALUES (?, ?, ?, ?)";
         try (var conn = com.nolmax.database.config.DatabaseConfig.getDataSource().getConnection();
              var stmt = conn.prepareStatement(sql)) {
+            message.setId(IdGenerator.getInstance().nextId());
             stmt.setLong(1, message.getId());
             stmt.setLong(2, message.getConversationId());
             stmt.setLong(3, message.getSenderId());
             stmt.setObject(4, message.getContent());
-            stmt.setLong(6, IdGenerator.getInstance().nextId());
             stmt.executeUpdate();
             return true;
         } catch (Exception e) {

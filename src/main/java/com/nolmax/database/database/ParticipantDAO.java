@@ -10,12 +10,12 @@ import java.util.ArrayList;
 public class ParticipantDAO {
 
     private boolean joinNew(Participant participant) {
-        String sql = "INSERT INTO participants (conversation_id, user_id, update_id) VALUES (?, ?, ?)";
-        try (Connection conn = DatabaseConfig.getDataSource().getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+        String sql = "INSERT INTO participants (conversation_id, user_id, role, update_id) VALUES (?, ?, ?, ?)";
+        try (Connection conn = DatabaseConfig.getDataSource().getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setLong(1, participant.getConversationId());
             stmt.setLong(2, participant.getUserId());
-            stmt.setLong(3, IdGenerator.getInstance().nextId());
+            stmt.setLong(3, participant.getRole()); // uninitialized int variables have value of 0 so we can freely get from here
+            stmt.setLong(4, IdGenerator.getInstance().nextId());
             int rows = stmt.executeUpdate();
             return rows > 0;
         } catch (SQLException e) {
@@ -26,8 +26,7 @@ public class ParticipantDAO {
 
     private boolean joinAgain(Participant participant) {
         String sql = "UPDATE participants SET left_at = NULL, update_id = ? WHERE conversation_id = ? AND user_id = ?";
-        try (Connection conn = DatabaseConfig.getDataSource().getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+        try (Connection conn = DatabaseConfig.getDataSource().getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setLong(1, IdGenerator.getInstance().nextId());
             stmt.setLong(2, participant.getConversationId());
             stmt.setLong(3, participant.getUserId());
@@ -41,8 +40,7 @@ public class ParticipantDAO {
 
     public boolean join(Participant participant) {
         String sql = "SELECT * FROM participants WHERE conversation_id = ? AND user_id = ?";
-        try (Connection conn = DatabaseConfig.getDataSource().getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+        try (Connection conn = DatabaseConfig.getDataSource().getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setLong(1, participant.getConversationId());
             stmt.setLong(2, participant.getUserId());
             try (ResultSet rs = stmt.executeQuery()) {
@@ -67,8 +65,7 @@ public class ParticipantDAO {
 
     public boolean left(Long conversationId, Long userId) {
         String sql = "UPDATE participants SET left_at = CURRENT_TIMESTAMP, update_id = ? WHERE conversation_id = ? AND user_id = ?";
-        try (Connection conn = DatabaseConfig.getDataSource().getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+        try (Connection conn = DatabaseConfig.getDataSource().getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setLong(1, IdGenerator.getInstance().nextId());
             stmt.setLong(2, conversationId);
             stmt.setLong(3, userId);
@@ -82,8 +79,7 @@ public class ParticipantDAO {
 
     public boolean updateRole(Long conversationId, Long userId, int role) {
         String sql = "UPDATE participants SET role = ?, update_id = ? WHERE conversation_id = ? AND user_id = ?";
-        try (Connection conn = DatabaseConfig.getDataSource().getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+        try (Connection conn = DatabaseConfig.getDataSource().getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, role);
             stmt.setLong(2, IdGenerator.getInstance().nextId());
             stmt.setLong(3, conversationId);
@@ -98,8 +94,7 @@ public class ParticipantDAO {
 
     public boolean updateLastReadMessageId(Long conversationId, Long userId, Long messageId) {
         String sql = "UPDATE participants SET last_read_message_id = ?, update_id = ? WHERE conversation_id = ? AND user_id = ?";
-        try (Connection conn = DatabaseConfig.getDataSource().getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+        try (Connection conn = DatabaseConfig.getDataSource().getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setLong(1, messageId);
             stmt.setLong(2, IdGenerator.getInstance().nextId());
             stmt.setLong(3, conversationId);
@@ -115,8 +110,7 @@ public class ParticipantDAO {
     public ArrayList<Participant> pull(Long conversationId, Long lastUpdateId) {
         String sql = "SELECT * FROM participants WHERE conversation_id = ? AND update_id > ? ORDER BY update_id ASC";
         ArrayList<Participant> participants = new ArrayList<>();
-        try (Connection conn = DatabaseConfig.getDataSource().getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+        try (Connection conn = DatabaseConfig.getDataSource().getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setLong(1, conversationId);
             stmt.setLong(2, lastUpdateId);
             try (ResultSet rs = stmt.executeQuery()) {
@@ -134,7 +128,21 @@ public class ParticipantDAO {
             }
         } catch (SQLException e) {
             e.printStackTrace();
-    }
+        }
         return participants;
+    }
+
+    public boolean isAdmin(Long conversationId, Long userId) {
+        String sql = "SELECT role FROM participants WHERE conversation_id = ? AND user_id = ? AND left_at IS NULL";
+        try (Connection conn = DatabaseConfig.getDataSource().getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setLong(1, conversationId);
+            stmt.setLong(2, userId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                return rs.next() && rs.getInt("role") == 1;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
     }
 }
