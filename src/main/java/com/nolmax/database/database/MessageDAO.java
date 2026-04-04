@@ -16,6 +16,8 @@ public class MessageDAO {
             stmt.setLong(3, message.getSenderId());
             stmt.setObject(4, message.getContent());
             stmt.executeUpdate();
+            ParticipantDAO participantDAO = new ParticipantDAO();
+            participantDAO.updateLastReadMessageId(message.getConversationId(), message.getSenderId(), message.getId());
             return true;
         } catch (Exception e) {
             e.printStackTrace();
