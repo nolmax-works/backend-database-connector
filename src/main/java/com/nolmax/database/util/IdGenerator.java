@@ -1,7 +1,7 @@
 package com.nolmax.database.util;
 
 public class IdGenerator {
-    private static final long EPOCH = 1778428800000L; // 2026-03-13T00:00:00Z UTC
+    private static final long EPOCH = 1773360000000L; // 2026-03-13T00:00:00Z UTC
     private static final int WORKER_ID_BITS = 5;
     private static final int SEQUENCE_BITS = 12;
     private static final long MAX_WORKER_ID = (1L << WORKER_ID_BITS) - 1;
