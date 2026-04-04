@@ -27,7 +27,7 @@ public class MessageDAO {
 
     public ArrayList<Message> pull(Long conversationId, Long lastUpdateId) {
         ArrayList<Message> messages = new ArrayList<>();
-        String sql = "SELECT id, conversation_id, sender_id, content, reply_to_id, sent_at FROM messages WHERE conversation_id = ? AND id > ? ORDER BY id ASC LIMIT 50";
+        String sql = "SELECT id, conversation_id, sender_id, content, sent_at FROM messages WHERE conversation_id = ? AND id > ? ORDER BY id ASC LIMIT 50";
         try (var conn = com.nolmax.database.config.DatabaseConfig.getDataSource().getConnection();
              var stmt = conn.prepareStatement(sql)) {
             stmt.setLong(1, conversationId);
