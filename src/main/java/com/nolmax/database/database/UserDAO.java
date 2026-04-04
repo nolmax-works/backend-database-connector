@@ -69,8 +69,7 @@ public class UserDAO {
 
     public String requestToken(String username, String password) {
         String sql = "SELECT id, password_hash FROM users WHERE username = ?";
-        try (Connection conn = DatabaseConfig.getDataSource().getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+        try (Connection conn = DatabaseConfig.getDataSource().getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setString(1, username);
 
@@ -91,13 +90,8 @@ public class UserDAO {
     }
 
     public boolean loginWithToken(User user) {
-        String sql =
-                "SELECT u.id, u.username, u.avatar_url, u.update_id " +
-                        "FROM user_tokens t " +
-                        "JOIN users u ON u.id = t.user_id " +
-                        "WHERE t.token = ?";
-        try (Connection conn = DatabaseConfig.getDataSource().getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+        String sql = "SELECT u.id, u.username, u.avatar_url, u.update_id " + "FROM user_tokens t " + "JOIN users u ON u.id = t.user_id " + "WHERE t.token = ?";
+        try (Connection conn = DatabaseConfig.getDataSource().getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, user.getToken());
 
             try (ResultSet rs = stmt.executeQuery()) {
@@ -115,27 +109,17 @@ public class UserDAO {
         return false;
     }
 
-    /* // old login with full credential
-    public boolean login(User user) {
-        String sql = "SELECT * FROM users WHERE username = ? AND password_hash = ?";
+    public boolean logout(Long userId, String token) {
+        String sql = "DELETE FROM user_tokens WHERE user_id = ? AND token = ?";
         try (Connection conn = DatabaseConfig.getDataSource().getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setString(1, user.getUsername());
-            stmt.setString(2, user.getPasswordHash());
-
-            try (ResultSet rs = stmt.executeQuery()) {
-                if (rs.next()) {
-                    user.setId(rs.getLong("id"));
-                    user.setAvatarUrl(rs.getString("avatar_url"));
-                    user.setUpdateId(rs.getLong("update_id"));
-                    return true;
-                }
-            }
+            stmt.setLong(1, userId);
+            stmt.setString(2, token);
+            return stmt.executeUpdate() > 0;
         } catch (SQLException e) {
             e.printStackTrace();
         }
         return false;
     }
-    */
 
     public boolean updateAvatar(Long id, String avatarUrl) {
         String sql = "UPDATE users SET avatar_url = ?, update_id = ? WHERE id = ?";
