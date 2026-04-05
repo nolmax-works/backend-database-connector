@@ -6,6 +6,7 @@ import com.nolmax.database.util.IdGenerator;
 
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.List;
 
 public class ParticipantDAO {
 
@@ -170,5 +171,55 @@ public class ParticipantDAO {
             e.printStackTrace();
         }
         return false;
+    }
+
+    public boolean isUserInConversation(Long conversationId, Long userId) {
+        String sql = "SELECT 1 FROM participants WHERE conversation_id = ? AND user_id = ? AND left_at IS NULL";
+        try (Connection conn = DatabaseConfig.getDataSource().getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setLong(1, conversationId);
+            stmt.setLong(2, userId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                return rs.next(); // Returns true if a record exists
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    public ArrayList<Participant> pullBatch(List<Long> conversationIds, Long lastUpdateId) {
+        if (conversationIds == null || conversationIds.isEmpty()) return new ArrayList<>();
+        ArrayList<Participant> participants = new ArrayList<>();
+
+        String inClause = String.join(",", java.util.Collections.nCopies(conversationIds.size(), "?"));
+        String sql = "SELECT * FROM participants WHERE conversation_id IN (" + inClause + ") AND update_id > ? ORDER BY update_id ASC";
+
+        try (Connection conn = DatabaseConfig.getDataSource().getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            int index = 1;
+            for (Long id : conversationIds) {
+                stmt.setLong(index++, id);
+            }
+            stmt.setLong(index, lastUpdateId);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    Participant participant = new Participant();
+                    participant.setConversationId(rs.getLong("conversation_id"));
+                    participant.setUserId(rs.getLong("user_id"));
+                    participant.setRole(rs.getInt("role"));
+                    participant.setJoinedAt(rs.getTimestamp("joined_at") != null ? rs.getTimestamp("joined_at").toLocalDateTime() : null);
+                    participant.setLeftAt(rs.getTimestamp("left_at") != null ? rs.getTimestamp("left_at").toLocalDateTime() : null);
+                    participant.setLastReadMessageId(rs.getLong("last_read_message_id"));
+                    participant.setUpdateId(rs.getLong("update_id"));
+                    participants.add(participant);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return participants;
     }
 }

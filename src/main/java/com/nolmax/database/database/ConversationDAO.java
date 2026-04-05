@@ -163,4 +163,39 @@ public class ConversationDAO {
         }
         return false;
     }
+
+    public List<Conversation> pullBatch(List<Long> conversationIds, Long lastUpdateId) {
+        if (conversationIds == null || conversationIds.isEmpty()) return new ArrayList<>();
+        List<Conversation> conversations = new ArrayList<>();
+
+        String inClause = String.join(",", java.util.Collections.nCopies(conversationIds.size(), "?"));
+        String sql = "SELECT id, type, name, avatar_url, update_id, last_message_id, created_by FROM conversations WHERE id IN (" + inClause + ") AND update_id > ?";
+
+        try (Connection conn = DatabaseConfig.getDataSource().getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            int index = 1;
+            for (Long id : conversationIds) {
+                stmt.setLong(index++, id);
+            }
+            stmt.setLong(index, lastUpdateId);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    Conversation conversation = new Conversation();
+                    conversation.setId(rs.getLong("id"));
+                    conversation.setType(rs.getInt("type"));
+                    conversation.setName(rs.getString("name"));
+                    conversation.setAvatarUrl(rs.getString("avatar_url"));
+                    conversation.setUpdateId(rs.getLong("update_id"));
+                    conversation.setLastMessageId(rs.getLong("last_message_id"));
+                    conversation.setCreatedBy(rs.getLong("created_by"));
+                    conversations.add(conversation);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return conversations;
+    }
 }

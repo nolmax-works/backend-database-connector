@@ -5,11 +5,11 @@ import com.nolmax.database.model.User;
 import com.nolmax.database.util.IdGenerator;
 import com.nolmax.database.util.PasswordUtils;
 
-import java.nio.ByteBuffer;
 import java.security.SecureRandom;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.List;
 
 public class UserDAO {
 
@@ -157,6 +157,41 @@ public class UserDAO {
         try (Connection conn = DatabaseConfig.getDataSource().getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setLong(1, conversationId);
             stmt.setLong(2, lastUpdateId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    User user = new User();
+                    user.setId(rs.getLong("id"));
+                    user.setUsername(rs.getString("username"));
+                    user.setAvatarUrl(rs.getString("avatar_url"));
+                    user.setUpdateId(rs.getLong("update_id"));
+                    users.add(user);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return users;
+    }
+
+    public ArrayList<User> pullBatch(List<Long> conversationIds, Long lastUpdateId) {
+        if (conversationIds == null || conversationIds.isEmpty()) return new ArrayList<>();
+        ArrayList<User> users = new ArrayList<>();
+
+        String inClause = String.join(",", java.util.Collections.nCopies(conversationIds.size(), "?"));
+        String sql = "SELECT DISTINCT u.id, u.username, u.avatar_url, u.update_id " +
+                "FROM users u " +
+                "JOIN participants cp ON u.id = cp.user_id " +
+                "WHERE cp.conversation_id IN (" + inClause + ") AND u.update_id > ?";
+
+        try (Connection conn = DatabaseConfig.getDataSource().getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            int index = 1;
+            for (Long id : conversationIds) {
+                stmt.setLong(index++, id);
+            }
+            stmt.setLong(index, lastUpdateId);
+
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
                     User user = new User();
