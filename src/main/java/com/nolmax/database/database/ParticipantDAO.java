@@ -107,6 +107,32 @@ public class ParticipantDAO {
         return false;
     }
 
+    public ArrayList<Participant> getParticipantsByConversation(Long conversationId) {
+        String sql = "SELECT * FROM participants WHERE conversation_id = ?";
+        ArrayList<Participant> participants = new ArrayList<>();
+
+        try (Connection conn = DatabaseConfig.getDataSource().getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setLong(1, conversationId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    Participant participant = new Participant();
+                    participant.setConversationId(rs.getLong("conversation_id"));
+                    participant.setUserId(rs.getLong("user_id"));
+                    participant.setRole(rs.getInt("role"));
+                    participant.setJoinedAt(rs.getTimestamp("joined_at") != null ? rs.getTimestamp("joined_at").toLocalDateTime() : null);
+                    participant.setLeftAt(rs.getTimestamp("left_at") != null ? rs.getTimestamp("left_at").toLocalDateTime() : null);
+                    participant.setLastReadMessageId(rs.getLong("last_read_message_id"));
+                    participant.setUpdateId(rs.getLong("update_id"));
+                    participants.add(participant);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return participants;
+    }
+
     public ArrayList<Participant> pull(Long conversationId, Long lastUpdateId) {
         String sql = "SELECT * FROM participants WHERE conversation_id = ? AND update_id > ? ORDER BY update_id ASC";
         ArrayList<Participant> participants = new ArrayList<>();
