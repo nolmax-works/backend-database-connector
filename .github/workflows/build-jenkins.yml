@@ -1,0 +1,20 @@
+name: Trigger Jenkins Build
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Connect to Tailscale
+        uses: tailscale/github-action@v4
+        with:
+          authkey: ${{ secrets.TAILSCALE_AUTHKEY }}
+
+      - name: Trigger Jenkins
+        run: |
+          curl -X POST \
+            http://${{ secrets.JENKINS_ADDRESS }}/job/backend-database-connector/build \
+            --user ${{ secrets.JENKINS_USER }}:${{ secrets.JENKINS_API_TOKEN }}
