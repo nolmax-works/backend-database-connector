@@ -122,6 +122,25 @@ public class ConversationDAO {
         return conversationIds;
     }
 
+    public List<Long> getUserIdList(Long conversationId) {
+        String sql = "SELECT user_id FROM participants WHERE conversation_id = ?";
+        List<Long> userIds = new ArrayList<>();
+
+        try (Connection conn = DatabaseConfig.getDataSource().getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setLong(1, conversationId);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    userIds.add(rs.getLong("user_id"));
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return userIds;
+    }
+
     public List<Conversation> pull(Long conversationId, Long lastUpdateId) {
         String sql = "SELECT type, name, avatar_url, update_id, last_message_id, created_by FROM conversations WHERE id = ? AND update_id > ?";
         List<Conversation> conversations = new ArrayList<>();
