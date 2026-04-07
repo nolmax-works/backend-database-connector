@@ -226,4 +226,29 @@ public class UserDAO {
         }
         return null;
     }
+
+    public boolean changePassword(String username, String oldPassword, String newPassword) {
+        String sql = "SELECT id, password_hash FROM users WHERE username = ?";
+        try (Connection conn = DatabaseConfig.getDataSource().getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setString(1, username);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    long userId = rs.getLong("id");
+                    String storedHash = rs.getString("password_hash");
+
+                    if (PasswordUtils.verifyPassword(oldPassword, storedHash)) {
+                        String newPasswordHash = PasswordUtils.hashPassword(newPassword);
+                        return updatePassword(userId, newPasswordHash);
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return false;
+    }
 }
