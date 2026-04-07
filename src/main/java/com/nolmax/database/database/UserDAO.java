@@ -178,13 +178,9 @@ public class UserDAO {
         ArrayList<User> users = new ArrayList<>();
 
         String inClause = String.join(",", java.util.Collections.nCopies(conversationIds.size(), "?"));
-        String sql = "SELECT DISTINCT u.id, u.username, u.avatar_url, u.update_id " +
-                "FROM users u " +
-                "JOIN participants cp ON u.id = cp.user_id " +
-                "WHERE cp.conversation_id IN (" + inClause + ") AND u.update_id > ?";
+        String sql = "SELECT DISTINCT u.id, u.username, u.avatar_url, u.update_id " + "FROM users u " + "JOIN participants cp ON u.id = cp.user_id " + "WHERE cp.conversation_id IN (" + inClause + ") AND u.update_id > ?";
 
-        try (Connection conn = DatabaseConfig.getDataSource().getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+        try (Connection conn = DatabaseConfig.getDataSource().getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             int index = 1;
             for (Long id : conversationIds) {
@@ -206,5 +202,28 @@ public class UserDAO {
             e.printStackTrace();
         }
         return users;
+    }
+
+    public User getUserByUsername(String username) {
+        String sql = "SELECT id, username, password_hash, avatar_url, update_id FROM users WHERE username = ?";
+
+        try (Connection conn = DatabaseConfig.getDataSource().getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setString(1, username);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    User user = new User();
+                    user.setId(rs.getLong("id"));
+                    user.setUsername(rs.getString("username"));
+                    user.setAvatarUrl(rs.getString("avatar_url"));
+                    user.setUpdateId(rs.getLong("update_id"));
+                    return user;
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 }
