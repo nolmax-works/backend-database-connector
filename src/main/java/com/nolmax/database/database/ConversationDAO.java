@@ -29,11 +29,12 @@ public class ConversationDAO {
                     }
                 }
 
-                if (conversation.getType() != null && conversation.getType() == 1) {
+                if (conversation.getType() != null) {
                     Participant participant = new Participant();
                     participant.setConversationId(conversation.getId());
                     participant.setUserId(conversation.getCreatedBy());
-                    participant.setRole(1);
+
+                    participant.setRole(conversation.getType() == 1 ? 1 : 0);
 
                     ParticipantDAO participantDAO = new ParticipantDAO();
                     if (!participantDAO.join(participant)) {
