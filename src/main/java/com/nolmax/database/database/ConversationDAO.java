@@ -17,8 +17,9 @@ public class ConversationDAO {
             stmt.setString(2, conversation.getName());
             stmt.setString(3, conversation.getAvatarUrl());
             stmt.setLong(4, conversation.getCreatedBy());
-            conversation.setUpdateId(IdGenerator.getInstance().nextId());
-            stmt.setLong(5, conversation.getId());
+            long newUpdateId = IdGenerator.getInstance().nextId();
+            conversation.setUpdateId(newUpdateId);
+            stmt.setLong(5, newUpdateId);
 
             int rows = stmt.executeUpdate();
             if (rows > 0) {
